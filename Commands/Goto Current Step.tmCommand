@@ -19,7 +19,7 @@ ${TM_RUBY:-ruby} /tmp/cucumber-$$.rb; exit_status=$?; rm /tmp/cucumber-$$.rb; ex
 	<key>input</key>
 	<string>none</string>
 	<key>keyEquivalent</key>
-	<string>^~$</string>
+	<string>~@</string>
 	<key>name</key>
 	<string>Goto Current Step</string>
 	<key>output</key>

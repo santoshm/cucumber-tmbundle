@@ -10,13 +10,17 @@ module Cucumber
       RAKE_BIN = %x{which rake}.chomp
       
       def initialize(output, project_directory, full_file_path, cucumber_bin = nil, cucumber_opts=nil)
-        @file = Files::Base.create_from_file_path(full_file_path)
+        @file = Files::Base.create_from_file_path(full_file_path) unless full_file_path.nil? #Santosh
         @output = output
         @project_directory = project_directory
         @filename_opts = ""
         @cucumber_bin = cucumber_bin || CUCUMBER_BIN
         @cucumber_opts = cucumber_opts || "--format=html"
-        @cucumber_opts << " --profile=#{@file.profile}" if @file.profile
+        if full_file_path #Santosh
+          puts "In if #{full_file_path}"
+          @cucumber_opts << " --profile=#{@file.profile}" if @file.profile
+        end #Santosh
+        
       end
 
       def run_scenario(line_number)
@@ -28,11 +32,34 @@ module Cucumber
         run
       end
       
+      #Santosh
+      def re_run_feature
+        re_run
+      end
+      
+      
       def autoformat_feature
         in_project_dir do
           Kernel.system("#{cucumber_cmd} --autoformat . #{@file.relative_path}")
         end
       end
+      
+      
+      #Santosh
+      def re_run
+        last_full_command = nil
+        if File.exist?('/tmp/last_command')
+          last_full_command = IO.readlines('/tmp/last_command')[0] 
+          @project_directory = IO.readlines('/tmp/last_project_directory')[0]
+        end
+      
+        in_project_dir do
+          @output << Kernel.system(last_full_command) unless last_full_command.nil?
+        end
+        
+      end
+      
+      
 
 
     protected
@@ -48,8 +75,21 @@ module Cucumber
           argv << "#{@file.full_file_path}#{@filename_opts}"
           argv << @cucumber_opts
         end
+        
+        #Santosh
+        @last_project_directory = File.new('/tmp/last_project_directory', "w")
+        @last_project_directory.write(@project_directory)
+        @last_project_directory.close
+        
         in_project_dir do
           @output << %Q{Running: #{full_command = "#{RUBY_BIN} #{command} #{@file.rake_task} #{argv.join(' ')}"} \n}
+          
+          #Santosh
+          @last_command_file = File.new('/tmp/last_command', "w")
+          @last_command_file.write("#{full_command}\n")
+          @last_command_file.close
+          
+          
           @output << Kernel.system(full_command)
         end
       end
